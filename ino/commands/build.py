@@ -132,19 +132,21 @@ class Build(Command):
             else:
                 dest[key] = val
 
-    # Attempts to determine selections in boars['menu'] based on args.menu.
-    # args.menu is assumed to be formatted as "key0:val0,key1:val1,...".
-    # Selected options are then merged into board as though the settings 
-    # were there all along.
-    def _parseMenu(self,args,board):
-        if not 'menu' in board:
-            return
+    def _parseMenu(self,args):
         choices = {}
         for option in args.menu.split(","):
             pair = option.split(":")
             if len(pair) < 2:
                 continue
             choices[pair[0]] = pair[1]
+        return choices
+
+    # Attempts to determine selections in board['menu'] based on entries in
+    # choices. Selected options are then merged into board as though the
+    # settings were there all along.
+    def _parseMenu(self,choices,board):
+        if not 'menu' in board:
+            return
 
         selectedOptions = {}
 
@@ -173,7 +175,12 @@ class Build(Command):
 
     def discover(self, args):
         board = self.e.board_model(args.board_model)
-        self._parseMenu(args,board)
+        menu = self._parseMenu(args)
+        if 'menu' in self.e:
+            _mergeDicts(self.e['menu'],menu)
+            menu = self.e['menu']
+        else
+            self.e['menu'] = menu
 
         core_place = os.path.join(board['_coredir'], 'cores', board['build']['core'])
         core_header = 'Arduino.h' if self.e.arduino_lib_version.major else 'WProgram.h'
